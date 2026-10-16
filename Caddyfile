@@ -1,0 +1,15 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# Web app (nginx container)
+{$WEB_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:80
+}
+
+# API: everything goes to the gateway
+{$API_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api-gateway:8080
+}
