@@ -1,0 +1,42 @@
+# Local development: everything published on localhost, Mailpit for e-mails.
+services:
+  sqlserver:
+    environment:
+      MSSQL_PID: Developer
+    ports: ["127.0.0.1:1433:1433"]        # SSMS / Azure Data Studio / IDE
+
+  redis:
+    ports: ["127.0.0.1:6379:6379"]
+
+  rabbitmq:
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"           # http://localhost:15672
+
+  mosquitto:
+    ports: ["1883:1883"]                  # all interfaces: the ESP32 on your WiFi connects to your PC IP
+
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"             # http://localhost:8025 (inbox)
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ms-iam:          { ports: ["127.0.0.1:3001:3001"], depends_on: { mailpit: { condition: service_healthy } } }
+  ms-places:       { ports: ["127.0.0.1:3002:3002"] }
+  ms-device:       { ports: ["127.0.0.1:3003:3003"] }
+  ms-consumption:  { ports: ["127.0.0.1:3004:3004"] }
+  ms-valve:        { ports: ["127.0.0.1:3005:3005"] }
+  ms-notification: { ports: ["127.0.0.1:3006:3006"], depends_on: { mailpit: { condition: service_healthy } } }
+
+  api-gateway:
+    ports: ["8080:8080"]                  # all interfaces: the phone (Expo Go) can use http://<PC IP>:8080
+
+  web:
+    ports: ["127.0.0.1:8082:80"]          # http://localhost:8082
