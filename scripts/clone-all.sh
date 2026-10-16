@@ -11,10 +11,10 @@ clone() {  # repo  branch  folder
 mkdir -p sy-water-backend sy-water-db sy-water-frontend
 clone iam-backend         dev  sy-water-backend/ms-iam
 clone ms-places           dev  sy-water-backend/ms-places
-clone ms-device           dev  sy-water-backend/ms-device
+clone ms-device           dev  sy-water-backend/ms-devices
 clone ms-consumption      dev  sy-water-backend/ms-consumption
 clone ms-valve            dev  sy-water-backend/ms-valve
-clone ms-notification     dev  sy-water-backend/ms-notification
+clone ms-notification     dev  sy-water-backend/ms-notifications
 clone api-gateway         dev  sy-water-backend/api-gateway
 clone ms-iam-db           main sy-water-db/ms-iam-db
 clone ms-places-db        main sy-water-db/ms-places-db
