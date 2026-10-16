@@ -1,0 +1,6 @@
+# Scripts and config run on Linux containers/servers: always LF
+*.sh   text eol=lf
+*.conf text eol=lf
+acl    text eol=lf
+Caddyfile text eol=lf
+*.yml  text eol=lf

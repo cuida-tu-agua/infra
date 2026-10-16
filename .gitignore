@@ -1,0 +1,5 @@
+# Secrets — never in git
+.env
+secrets/
+mosquitto/config/passwd
+backups/

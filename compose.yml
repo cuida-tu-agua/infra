@@ -1,0 +1,197 @@
+name: cuidatuagua
+
+# ── Settings shared by the five .NET services ────────────────────────────────────
+x-dotnet-env: &dotnet-env
+  ASPNETCORE_ENVIRONMENT: Production
+  DOTNET_gcServer: "0"                       # workstation GC: less memory per process
+  Jwt__Issuer: https://iam.cuidatuagua.local # same value as iam.jwt.issuer in ms-iam
+  Redis__Configuration: redis:6379
+  Internal__ApiKey: ${INTERNAL_API_KEY}
+  RabbitMq__Host: rabbitmq
+  RabbitMq__Port: "5672"
+  RabbitMq__Username: sywater
+  RabbitMq__Password: ${RABBITMQ_PASSWORD}
+
+x-dotnet: &dotnet
+  restart: unless-stopped
+  volumes:
+    - ${KEYS_DIR}/public.pem:/app/keys/iam-public.pem:ro
+  depends_on:
+    sqlserver: { condition: service_healthy }
+    rabbitmq: { condition: service_healthy }
+    redis: { condition: service_started }
+
+services:
+  # ═══ Infrastructure ═══════════════════════════════════════════════════════════
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: sywater
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - mosquitto-data:/mosquitto/data
+
+  # ═══ Services ═════════════════════════════════════════════════════════════════
+  ms-iam:
+    build: ../sy-water-backend/ms-iam
+    restart: unless-stopped
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75"
+      SPRING_DATASOURCE_URL: "jdbc:sqlserver://sqlserver:1433;databaseName=sy-water-db;encrypt=true;trustServerCertificate=true"
+      SECURITY_APP_PASSWORD: ${SECURITY_APP_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      DEVICES_URL: http://ms-device:3003
+      PLACES_URL: http://ms-places:3002
+      IAM_CORSALLOWEDORIGINS: ""             # the gateway answers CORS
+      SPRING_MAIL_HOST: ${SMTP_HOST}
+      SPRING_MAIL_PORT: ${SMTP_PORT}
+      SPRING_MAIL_USERNAME: ${SMTP_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SMTP_AUTH}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SMTP_STARTTLS}
+      IAM_MAIL_FROM: "Cuida Tu Agua <${SMTP_FROM}>"
+    volumes:
+      - ${KEYS_DIR}/public.pem:/app/keys/public.pem:ro
+      - ${KEYS_DIR}/private.pem:/app/keys/private.pem:ro
+      - iam-avatars:/app/uploads
+    depends_on:
+      sqlserver: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  ms-places:
+    <<: *dotnet
+    build: ../sy-water-backend/ms-places
+    environment:
+      <<: *dotnet-env
+      ASPNETCORE_HTTP_PORTS: "3002"
+      ConnectionStrings__Places: "Server=sqlserver,1433;Database=sy-water-db;User Id=places_app;Password=${PLACES_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Services__DevicesBaseUrl: http://ms-device:3003
+      Services__ConsumptionBaseUrl: http://ms-consumption:3004
+
+  ms-device:
+    <<: *dotnet
+    build: ../sy-water-backend/ms-device
+    environment:
+      <<: *dotnet-env
+      ASPNETCORE_HTTP_PORTS: "3003"
+      ConnectionStrings__Devices: "Server=sqlserver,1433;Database=sy-water-db;User Id=devices_app;Password=${DEVICES_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Services__PlacesBaseUrl: http://ms-places:3002
+      Mqtt__Host: mosquitto
+      Mqtt__Port: "1883"
+      Mqtt__Username: ms-devices
+      Mqtt__Password: ${MQTT_MS_DEVICES_PASSWORD}
+
+  ms-consumption:
+    <<: *dotnet
+    build: ../sy-water-backend/ms-consumption
+    environment:
+      <<: *dotnet-env
+      ASPNETCORE_HTTP_PORTS: "3004"
+      ConnectionStrings__Consumption: "Server=sqlserver,1433;Database=sy-water-db;User Id=consumption_app;Password=${CONSUMPTION_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Services__PlacesBaseUrl: http://ms-places:3002
+
+  ms-valve:
+    <<: *dotnet
+    build: ../sy-water-backend/ms-valve
+    environment:
+      <<: *dotnet-env
+      ASPNETCORE_HTTP_PORTS: "3005"
+      ConnectionStrings__Valve: "Server=sqlserver,1433;Database=sy-water-db;User Id=valve_app;Password=${VALVE_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Services__IamBaseUrl: http://ms-iam:3001
+      Services__PlacesBaseUrl: http://ms-places:3002
+      Services__DevicesBaseUrl: http://ms-device:3003
+
+  ms-notification:
+    <<: *dotnet
+    build: ../sy-water-backend/ms-notification
+    environment:
+      <<: *dotnet-env
+      ASPNETCORE_HTTP_PORTS: "3006"
+      ConnectionStrings__Notification: "Server=sqlserver,1433;Database=sy-water-db;User Id=notification_app;Password=${NOTIFICATION_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Services__IamBaseUrl: http://ms-iam:3001
+      App__PublicUrl: ${APP_PUBLIC_URL}
+      Smtp__Host: ${SMTP_HOST}
+      Smtp__Port: ${SMTP_PORT}
+      Smtp__Security: ${SMTP_SECURITY}
+      Smtp__Username: ${SMTP_USERNAME}
+      Smtp__Password: ${SMTP_PASSWORD}
+      Smtp__FromAddress: ${SMTP_FROM}
+      Smtp__FromName: Cuida Tu Agua
+
+  # ═══ Entry points ═════════════════════════════════════════════════════════════
+  api-gateway:
+    build: ../sy-water-backend/api-gateway
+    restart: unless-stopped
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75"
+      REDIS_HOST: redis
+      IAM_URL: http://ms-iam:3001
+      PLACES_URL: http://ms-places:3002
+      DEVICES_URL: http://ms-device:3003
+      CONSUMPTION_URL: http://ms-consumption:3004
+      VALVE_URL: http://ms-valve:3005
+      NOTIFICATIONS_URL: http://ms-notification:3006
+      IAM_PUBLIC_KEY: file:/keys/public.pem
+      GATEWAY_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS}
+    volumes:
+      - ${KEYS_DIR}/public.pem:/keys/public.pem:ro
+    depends_on:
+      - redis
+      - ms-iam
+
+  web:
+    build:
+      context: ../sy-water-frontend/save-your-water
+      args:
+        EXPO_PUBLIC_API_URL: ${PUBLIC_API_URL}/iam
+        EXPO_PUBLIC_PLACES_API_URL: ${PUBLIC_API_URL}/places
+        EXPO_PUBLIC_DEVICES_API_URL: ${PUBLIC_API_URL}/devices
+        EXPO_PUBLIC_CONSUMPTION_API_URL: ${PUBLIC_API_URL}/consumption
+        EXPO_PUBLIC_VALVE_API_URL: ${PUBLIC_API_URL}/valve
+        EXPO_PUBLIC_NOTIFICATIONS_API_URL: ${PUBLIC_API_URL}/notifications
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  rabbitmq-data:
+  mosquitto-data:
+  iam-avatars:
