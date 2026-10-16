@@ -8,8 +8,13 @@
 	reverse_proxy web:80
 }
 
-# API: everything goes to the gateway
+# API: /docs goes to Swagger UI, everything else to the gateway
 {$API_DOMAIN} {
 	encode zstd gzip
-	reverse_proxy api-gateway:8080
+	handle /docs* {
+		reverse_proxy swagger-ui:8080
+	}
+	handle {
+		reverse_proxy api-gateway:8080
+	}
 }

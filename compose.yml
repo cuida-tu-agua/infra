@@ -132,6 +132,8 @@ services:
       DEVICES_URL: http://ms-device:3003
       PLACES_URL: http://ms-places:3002
       IAM_CORSALLOWEDORIGINS: ""             # the gateway answers CORS
+      OPENAPI_ENABLED: "true"                # publish /v3/api-docs (read by swagger-ui)
+      IAM_OPENAPI_SERVER_URL: /iam
       SPRING_MAIL_HOST: ${SMTP_HOST}
       SPRING_MAIL_PORT: ${SMTP_PORT}
       SPRING_MAIL_USERNAME: ${SMTP_USERNAME}
@@ -156,6 +158,8 @@ services:
     environment:
       <<: *dotnet-env
       ASPNETCORE_HTTP_PORTS: "3002"
+      OpenApi__Enabled: "true"               # publish /openapi/v1.json (read by swagger-ui)
+      OpenApi__ServerUrl: /places
       ConnectionStrings__Places: "Server=sqlserver,1433;Database=sy-water-db;User Id=places_app;Password=${PLACES_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__DevicesBaseUrl: http://ms-device:3003
       Services__ConsumptionBaseUrl: http://ms-consumption:3004
@@ -166,6 +170,8 @@ services:
     environment:
       <<: *dotnet-env
       ASPNETCORE_HTTP_PORTS: "3003"
+      OpenApi__Enabled: "true"               # publish /openapi/v1.json (read by swagger-ui)
+      OpenApi__ServerUrl: /devices
       ConnectionStrings__Devices: "Server=sqlserver,1433;Database=sy-water-db;User Id=devices_app;Password=${DEVICES_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__PlacesBaseUrl: http://ms-places:3002
       Mqtt__Host: mosquitto
@@ -184,6 +190,8 @@ services:
     environment:
       <<: *dotnet-env
       ASPNETCORE_HTTP_PORTS: "3004"
+      OpenApi__Enabled: "true"               # publish /openapi/v1.json (read by swagger-ui)
+      OpenApi__ServerUrl: /consumption
       ConnectionStrings__Consumption: "Server=sqlserver,1433;Database=sy-water-db;User Id=consumption_app;Password=${CONSUMPTION_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__PlacesBaseUrl: http://ms-places:3002
 
@@ -193,6 +201,8 @@ services:
     environment:
       <<: *dotnet-env
       ASPNETCORE_HTTP_PORTS: "3005"
+      OpenApi__Enabled: "true"               # publish /openapi/v1.json (read by swagger-ui)
+      OpenApi__ServerUrl: /valve
       ConnectionStrings__Valve: "Server=sqlserver,1433;Database=sy-water-db;User Id=valve_app;Password=${VALVE_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__IamBaseUrl: http://ms-iam:3001
       Services__PlacesBaseUrl: http://ms-places:3002
@@ -204,6 +214,8 @@ services:
     environment:
       <<: *dotnet-env
       ASPNETCORE_HTTP_PORTS: "3006"
+      OpenApi__Enabled: "true"               # publish /openapi/v1.json (read by swagger-ui)
+      OpenApi__ServerUrl: /notifications
       ConnectionStrings__Notification: "Server=sqlserver,1433;Database=sy-water-db;User Id=notification_app;Password=${NOTIFICATION_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__IamBaseUrl: http://ms-iam:3001
       App__PublicUrl: ${APP_PUBLIC_URL}
@@ -263,6 +275,28 @@ services:
     depends_on:
       api-gateway: { condition: service_healthy }
   
+  # ═══ API documentation ══════════════════════════════════════════════════════════
+  # One Swagger UI for the six services; the documents are read through the gateway.
+  swagger-ui:
+    image: swaggerapi/swagger-ui:v5.17.14
+    restart: unless-stopped
+    environment:
+      BASE_URL: /docs
+      URLS: >-
+        [{"name":"ms-iam","url":"${PUBLIC_API_URL}/iam/v3/api-docs"},
+         {"name":"ms-places","url":"${PUBLIC_API_URL}/places/openapi/v1.json"},
+         {"name":"ms-device","url":"${PUBLIC_API_URL}/devices/openapi/v1.json"},
+         {"name":"ms-consumption","url":"${PUBLIC_API_URL}/consumption/openapi/v1.json"},
+         {"name":"ms-valve","url":"${PUBLIC_API_URL}/valve/openapi/v1.json"},
+         {"name":"ms-notification","url":"${PUBLIC_API_URL}/notifications/openapi/v1.json"}]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/docs/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      api-gateway: { condition: service_healthy }
+
   # ═══ Database migrations (profile "migrate") ═════════════════════════════════
   # Each repo: 1) 00-init.sql creates its schema and users, 2) Liquibase applies the changelog.
   # They run in a chain, in the same order as in local development (ms-iam-db creates the database).

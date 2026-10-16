@@ -24,6 +24,17 @@ services:
   ms-notification: { mem_limit: 256m }
   api-gateway:     { mem_limit: 512m }
   web:             { mem_limit: 64m }
+  swagger-ui:      { mem_limit: 64m }
+
+  # Container admin panel: only through an SSH tunnel (ssh -L 9443:127.0.0.1:9443 ...)
+  portainer:
+    image: portainer/portainer-ce:lts
+    restart: unless-stopped
+    mem_limit: 192m
+    ports: ["127.0.0.1:9443:9443"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
 
   caddy:
     image: caddy:2
@@ -44,7 +55,9 @@ services:
     depends_on:
       - api-gateway
       - web
+      - swagger-ui
 
 volumes:
   caddy-data:
   caddy-config:
+  portainer-data:

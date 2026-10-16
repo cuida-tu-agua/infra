@@ -40,3 +40,6 @@ services:
 
   web:
     ports: ["127.0.0.1:8082:80"]          # http://localhost:8082
+
+  swagger-ui:
+    ports: ["127.0.0.1:8083:8080"]        # http://localhost:8083/docs
