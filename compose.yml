@@ -141,6 +141,11 @@ services:
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SMTP_AUTH}
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SMTP_STARTTLS}
       IAM_MAIL_FROM: "Cuida Tu Agua <${SMTP_FROM}>"
+      # HU-004 "Continuar con Google" (empty id/secret = the button is hidden)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${PUBLIC_API_URL}/iam/api/auth/google/callback
+      GOOGLE_ALLOWED_REDIRECTS: ${APP_PUBLIC_URL},${GOOGLE_EXTRA_REDIRECTS:-saveyourwater:,exp:}
     volumes:
       - ${KEYS_DIR}/public.pem:/app/keys/public.pem:ro
       - ${KEYS_DIR}/private.pem:/app/keys/private.pem:ro
