@@ -14,6 +14,8 @@ docker compose up -d --build
 ```
 Web http://localhost:8082 · Gateway http://localhost:8080 · Mailpit http://localhost:8025 · RabbitMQ http://localhost:15672
 
+SMS / WhatsApp (HU-028): locally they are mails in Mailpit (to `sms.<number>@sms.cuidatuagua.local` or `whatsapp.<number>@…`), no account needed. To send to a real phone put `SMS_PROVIDER=twilio` and the `TWILIO_*` values in `.env` (see `.env.example`).
+
 ## Production
 `.env` with `COMPOSE_FILE=compose.yml:compose.prod.yml` (see the deployment guide).
 
@@ -21,5 +23,5 @@ Web http://localhost:8082 · Gateway http://localhost:8080 · Mailpit http://loc
 | File | Use |
 |---|---|
 | compose.yml | Base: all containers + migrations (profile `migrate`) |
-| compose.override.yml | Local (loaded automatically): ports on localhost, Mailpit |
+| compose.override.yml | Local (loaded automatically): ports on localhost, Mailpit (also for the SMS / WhatsApp) |
 | compose.prod.yml | Production: Caddy, SQL Server Express, memory limits |
