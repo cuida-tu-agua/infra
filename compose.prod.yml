@@ -16,15 +16,40 @@ services:
     ports: ["1883:1883"]                  # the meters connect from the Internet
     mem_limit: 64m
 
-  ms-iam:          { mem_limit: 640m }
-  ms-places:       { mem_limit: 256m }
-  ms-device:       { mem_limit: 256m }
-  ms-consumption:  { mem_limit: 256m }
-  ms-valve:        { mem_limit: 256m }
-  ms-notification: { mem_limit: 256m }
-  api-gateway:     { mem_limit: 512m }
-  web:             { mem_limit: 64m }
-  swagger-ui:      { mem_limit: 64m }
+  # Producción NO construye: descarga la imagen que Jenkins subió a GHCR.
+  # El tag de cada servicio vive en el .env del servidor (Jenkins lo actualiza al desplegar).
+  ms-iam:
+    image: ghcr.io/cuida-tu-agua/ms-iam:${MS_IAM_TAG:?falta MS_IAM_TAG en .env}
+    build: !reset null
+    mem_limit: 640m
+  ms-places:
+    image: ghcr.io/cuida-tu-agua/ms-places:${MS_PLACES_TAG:?falta MS_PLACES_TAG en .env}
+    build: !reset null
+    mem_limit: 256m
+  ms-device:
+    image: ghcr.io/cuida-tu-agua/ms-device:${MS_DEVICE_TAG:?falta MS_DEVICE_TAG en .env}
+    build: !reset null
+    mem_limit: 256m
+  ms-consumption:
+    image: ghcr.io/cuida-tu-agua/ms-consumption:${MS_CONSUMPTION_TAG:?falta MS_CONSUMPTION_TAG en .env}
+    build: !reset null
+    mem_limit: 256m
+  ms-valve:
+    image: ghcr.io/cuida-tu-agua/ms-valve:${MS_VALVE_TAG:?falta MS_VALVE_TAG en .env}
+    build: !reset null
+    mem_limit: 256m
+  ms-notification:
+    image: ghcr.io/cuida-tu-agua/ms-notification:${MS_NOTIFICATION_TAG:?falta MS_NOTIFICATION_TAG en .env}
+    build: !reset null
+    mem_limit: 256m
+  api-gateway:
+    image: ghcr.io/cuida-tu-agua/api-gateway:${API_GATEWAY_TAG:?falta API_GATEWAY_TAG en .env}
+    build: !reset null
+    mem_limit: 512m
+  web:
+    image: ghcr.io/cuida-tu-agua/web:${WEB_TAG:?falta WEB_TAG en .env}
+    build: !reset null
+    mem_limit: 64m
 
   # Container admin panel: only through an SSH tunnel (ssh -L 9443:127.0.0.1:9443 ...)
   portainer:
