@@ -131,6 +131,7 @@ services:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       DEVICES_URL: http://ms-device:3003
       PLACES_URL: http://ms-places:3002
+      NOTIFICATIONS_URL: http://ms-notification:3006   # HU-028: delivers the phone verification code (SMS / WhatsApp)
       IAM_CORSALLOWEDORIGINS: ""             # the gateway answers CORS
       OPENAPI_ENABLED: "true"                # publish /v3/api-docs (read by swagger-ui)
       IAM_OPENAPI_SERVER_URL: /iam
@@ -231,6 +232,12 @@ services:
       Smtp__Password: ${SMTP_PASSWORD}
       Smtp__FromAddress: ${SMTP_FROM}
       Smtp__FromName: Cuida Tu Agua
+      # HU-028 SMS / WhatsApp: twilio (server) · mailpit (local, see compose.override.yml) · empty = off
+      Sms__Provider: ${SMS_PROVIDER:-}
+      Twilio__AccountSid: ${TWILIO_ACCOUNT_SID:-}
+      Twilio__AuthToken: ${TWILIO_AUTH_TOKEN:-}
+      Twilio__SmsFrom: ${TWILIO_SMS_FROM:-}
+      Twilio__WhatsAppFrom: ${TWILIO_WHATSAPP_FROM:-}
 
   # ═══ Entry points ═════════════════════════════════════════════════════════════
   api-gateway:

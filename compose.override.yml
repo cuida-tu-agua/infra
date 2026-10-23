@@ -33,7 +33,13 @@ services:
   ms-device:       { ports: ["127.0.0.1:3003:3003"] }
   ms-consumption:  { ports: ["127.0.0.1:3004:3004"] }
   ms-valve:        { ports: ["127.0.0.1:3005:3005"] }
-  ms-notification: { ports: ["127.0.0.1:3006:3006"], depends_on: { mailpit: { condition: service_healthy } } }
+  ms-notification:
+    ports: ["127.0.0.1:3006:3006"]
+    depends_on: { mailpit: { condition: service_healthy } }
+    environment:
+      # HU-028: locally every SMS / WhatsApp (alerts and phone codes) is a mail in Mailpit, no Twilio needed.
+      # Put SMS_PROVIDER=twilio + TWILIO_* in .env to try a real phone.
+      Sms__Provider: ${SMS_PROVIDER:-mailpit}
 
   api-gateway:
     ports: ["8080:8080"]                  # all interfaces: the phone (Expo Go) can use http://<PC IP>:8080
