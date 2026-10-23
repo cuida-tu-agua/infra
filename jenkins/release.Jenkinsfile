@@ -3,10 +3,10 @@
 def SERVICES = [
   'ms-iam'         : [repo: 'iam-backend',            tagVar: 'MS_IAM_TAG'],
   'ms-places'      : [repo: 'ms-places',              tagVar: 'MS_PLACES_TAG'],
-  'ms-device'      : [repo: 'ms-device',              tagVar: 'MS_DEVICE_TAG'],
+  'ms-device'      : [repo: 'ms-devices',             tagVar: 'MS_DEVICE_TAG'],
   'ms-consumption' : [repo: 'ms-consumption',         tagVar: 'MS_CONSUMPTION_TAG'],
   'ms-valve'       : [repo: 'ms-valve',               tagVar: 'MS_VALVE_TAG'],
-  'ms-notification': [repo: 'ms-notification',        tagVar: 'MS_NOTIFICATION_TAG'],
+  'ms-notification': [repo: 'ms-notifications',       tagVar: 'MS_NOTIFICATION_TAG'],
   'api-gateway'    : [repo: 'api-gateway',            tagVar: 'API_GATEWAY_TAG'],
   'web'            : [repo: 'cuida-tu-agua-frontNEW', tagVar: 'WEB_TAG'],
 ]
