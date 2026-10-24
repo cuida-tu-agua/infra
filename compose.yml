@@ -244,6 +244,8 @@ services:
       Twilio__AuthToken: ${TWILIO_AUTH_TOKEN:-}
       Twilio__SmsFrom: ${TWILIO_SMS_FROM:-}
       Twilio__WhatsAppFrom: ${TWILIO_WHATSAPP_FROM:-}
+      Twilio__WhatsAppTemplateSid: ${TWILIO_WHATSAPP_TEMPLATE_SID:-}
+      Twilio__CodeTemplateSid: ${TWILIO_CODE_TEMPLATE_SID:-}
       # WhatsApp by the Cloud API of Meta (meta) instead of SMS_PROVIDER; empty = WhatsApp goes with SMS_PROVIDER
       WhatsApp__Provider: ${WHATSAPP_PROVIDER:-}
       Meta__AccessToken: ${META_ACCESS_TOKEN:-}
