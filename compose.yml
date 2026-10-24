@@ -169,6 +169,11 @@ services:
       ConnectionStrings__Places: "Server=sqlserver,1433;Database=sy-water-db;User Id=places_app;Password=${PLACES_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__DevicesBaseUrl: http://ms-device:3003
       Services__ConsumptionBaseUrl: http://ms-consumption:3004
+      # HU-039 to HU-047 sharing: people behind an e-mail and the invitation mail (ms-iam), the invitation in the notification
+      # center / WhatsApp and the answer to the owner (ms-notification), and the guest links (the web app)
+      Services__IamBaseUrl: http://ms-iam:3001
+      Services__NotificationsBaseUrl: http://ms-notification:3006
+      App__BaseUrl: ${APP_PUBLIC_URL}
 
   ms-device:
     <<: *dotnet
@@ -224,6 +229,7 @@ services:
       OpenApi__ServerUrl: /notifications
       ConnectionStrings__Notification: "Server=sqlserver,1433;Database=sy-water-db;User Id=notification_app;Password=${NOTIFICATION_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__IamBaseUrl: http://ms-iam:3001
+      Services__PlacesBaseUrl: http://ms-places:3002   # HU-047: collaborators with VIEW_ALERTS also get the alerts
       App__PublicUrl: ${APP_PUBLIC_URL}
       Smtp__Host: ${SMTP_HOST}
       Smtp__Port: ${SMTP_PORT}
@@ -238,6 +244,13 @@ services:
       Twilio__AuthToken: ${TWILIO_AUTH_TOKEN:-}
       Twilio__SmsFrom: ${TWILIO_SMS_FROM:-}
       Twilio__WhatsAppFrom: ${TWILIO_WHATSAPP_FROM:-}
+      # WhatsApp by the Cloud API of Meta (meta) instead of SMS_PROVIDER; empty = WhatsApp goes with SMS_PROVIDER
+      WhatsApp__Provider: ${WHATSAPP_PROVIDER:-}
+      Meta__AccessToken: ${META_ACCESS_TOKEN:-}
+      Meta__PhoneNumberId: ${META_PHONE_NUMBER_ID:-}
+      Meta__TemplateName: ${META_TEMPLATE_NAME:-}
+      Meta__CodeTemplateName: ${META_CODE_TEMPLATE_NAME:-}
+      Meta__TemplateLanguage: ${META_TEMPLATE_LANGUAGE:-es}
 
   # ═══ Entry points ═════════════════════════════════════════════════════════════
   api-gateway:
