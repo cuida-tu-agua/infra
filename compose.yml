@@ -169,6 +169,8 @@ services:
       ConnectionStrings__Places: "Server=sqlserver,1433;Database=sy-water-db;User Id=places_app;Password=${PLACES_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__DevicesBaseUrl: http://ms-device:3003
       Services__ConsumptionBaseUrl: http://ms-consumption:3004
+      Services__IamBaseUrl: http://ms-iam:3001
+      App__BaseUrl: ${APP_PUBLIC_URL}
 
   ms-device:
     <<: *dotnet
@@ -224,6 +226,7 @@ services:
       OpenApi__ServerUrl: /notifications
       ConnectionStrings__Notification: "Server=sqlserver,1433;Database=sy-water-db;User Id=notification_app;Password=${NOTIFICATION_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Services__IamBaseUrl: http://ms-iam:3001
+      Services__PlacesBaseUrl: http://ms-places:3002
       App__PublicUrl: ${APP_PUBLIC_URL}
       Smtp__Host: ${SMTP_HOST}
       Smtp__Port: ${SMTP_PORT}
