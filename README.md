@@ -14,7 +14,7 @@ docker compose up -d --build
 ```
 Web http://localhost:8082 · Gateway http://localhost:8080 · Mailpit http://localhost:8025 · RabbitMQ http://localhost:15672
 
-SMS / WhatsApp (HU-028): locally they are mails in Mailpit (to `sms.<number>@sms.cuidatuagua.local` or `whatsapp.<number>@…`), no account needed. To send to a real phone put `SMS_PROVIDER=twilio` and the `TWILIO_*` values in `.env` (see `.env.example`).
+SMS / WhatsApp (HU-028): locally they are mails in Mailpit (to `sms.<number>@sms.cuidatuagua.local` or `whatsapp.<number>@…`), no account needed. To send to a real phone put `SMS_PROVIDER=twilio` and the `TWILIO_*` values in `.env` (see `.env.example`). With Twilio, leave `TWILIO_SMS_FROM` empty for WhatsApp only and put the approved templates in `TWILIO_WHATSAPP_TEMPLATE_SID` / `TWILIO_CODE_TEMPLATE_SID`. WhatsApp can go by the WhatsApp Cloud API of Meta instead (free test number): `WHATSAPP_PROVIDER=meta` + `META_ACCESS_TOKEN` and `META_PHONE_NUMBER_ID`; SMS keeps going by `SMS_PROVIDER`.
 
 ## Production
 `.env` with `COMPOSE_FILE=compose.yml:compose.prod.yml` (see the deployment guide).
